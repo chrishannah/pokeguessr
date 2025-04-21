@@ -2,7 +2,7 @@
 
 import inquirer from "inquirer";
 import chalk from "chalk";
-import pokemonList from './pokemon.js';
+import pokemonList from "./pokemon.js";
 import process from "node:process";
 
 const TOTAL_COLUMNS = 6;
@@ -10,7 +10,6 @@ const TOTAL_COLUMNS = 6;
 const revealed = [];
 
 async function gameLoop() {
-
     while (revealed.length < 151) {
         printPokemonList(pokemonList, revealed);
 
@@ -29,16 +28,29 @@ async function gameLoop() {
         ]);
 
         const guess = answers.guess.trim().toLowerCase();
+        const found = pokemonList.filter((pokemon) =>
+            pokemon.name.toLowerCase() === guess
+        );
         const alreadyFound = revealed.find((pokemon) =>
             pokemon.name.toLowerCase() === guess
         );
-        const result = pokemonList.find((pokemon) =>
-            pokemon.name.toLowerCase() === guess
-        );
 
-        if (result && !alreadyFound) {
-            revealed.push(result);
+        // Already found
+        if (alreadyFound) {
+            console.log(chalk.yellow(`Already guessed: ${found[0].name}`));
         }
+
+        if (found.length > 0 && !alreadyFound) {
+            // Correct
+            console.log(chalk.green(`Correct: ${found[0].name}`));
+            revealed.push(...found);
+        } else {
+            // Incorrect
+            console.log(chalk.red(`Incorrect: ${answers.guess}`));
+        }
+
+        // Wait 0.6s (can still input during time)
+        await new Promise((resolve) => setTimeout(resolve, 600));
     }
 }
 
