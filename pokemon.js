@@ -152,4 +152,4 @@ const pokemonList = [
   { number: 151, name: "Mew" },
 ];
 
-module.exports = pokemonList;
+export default pokemonList;
