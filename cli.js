@@ -12,6 +12,7 @@ const MAX_COLUMNS = 10; // Maximum columns to prevent overcrowding
 
 const revealed = [];
 let shouldRedraw = false;
+let startTime = null;
 
 // Calculate optimal number of columns based on terminal width
 function calculateColumns() {
@@ -27,7 +28,27 @@ process.stdout.on('resize', () => {
     shouldRedraw = true;
 });
 
+// Format elapsed time in a readable format
+function formatTime(milliseconds) {
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    const secs = seconds % 60;
+    const mins = minutes % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${mins}m ${secs}s`;
+    } else if (minutes > 0) {
+        return `${mins}m ${secs}s`;
+    } else {
+        return `${secs}s`;
+    }
+}
+
 async function gameLoop() {
+    startTime = Date.now();
+
     while (revealed.length < 151) {
         printPokemonList(pokemonList, revealed);
         shouldRedraw = false; // Reset redraw flag after printing
@@ -75,7 +96,11 @@ async function gameLoop() {
 
 function printPokemonList(all, revealed) {
     console.clear();
-    console.log(chalk.green(`Guessed ${revealed.length}/151`));
+
+    const elapsed = startTime ? Date.now() - startTime : 0;
+    const timeStr = formatTime(elapsed);
+
+    console.log(chalk.green(`Guessed ${revealed.length}/151`) + chalk.gray(` | Time: ${timeStr}`));
 
     const pokemon = all.map((pokemon) => {
         const found = revealed.find((rev) => rev.number === pokemon.number);
@@ -101,11 +126,48 @@ function printPokemonList(all, revealed) {
     }
 
     if (all.length === revealed.length) {
-        console.log(
-            chalk.green("Congratulations, you have found all 151 Pokémon!"),
-        );
+        showCompletionScreen();
         process.exit(0);
     }
+}
+
+function showCompletionScreen() {
+    console.clear();
+
+    const elapsed = Date.now() - startTime;
+    const timeStr = formatTime(elapsed);
+
+    // ASCII Art
+    const art = `
+${chalk.yellow('╔═══════════════════════════════════════════════════════════════╗')}
+${chalk.yellow('║')}                                                               ${chalk.yellow('║')}
+${chalk.yellow('║')}      ${chalk.green.bold('██████╗  ██████╗ ███╗   ██╗ ██████╗ ██████╗  █████╗ ████████╗███████╗')}      ${chalk.yellow('║')}
+${chalk.yellow('║')}      ${chalk.green.bold('██╔════╝ ██╔═══██╗████╗  ██║██╔════╝ ██╔══██╗██╔══██╗╚══██╔══╝██╔════╝')}      ${chalk.yellow('║')}
+${chalk.yellow('║')}      ${chalk.green.bold('██║  ███╗██║   ██║██╔██╗ ██║██║  ███╗██████╔╝███████║   ██║   ███████╗')}      ${chalk.yellow('║')}
+${chalk.yellow('║')}      ${chalk.green.bold('██║   ██║██║   ██║██║╚██╗██║██║   ██║██╔══██╗██╔══██║   ██║   ╚════██║')}      ${chalk.yellow('║')}
+${chalk.yellow('║')}      ${chalk.green.bold('╚██████╔╝╚██████╔╝██║ ╚████║╚██████╔╝██║  ██║██║  ██║   ██║   ███████║')}      ${chalk.yellow('║')}
+${chalk.yellow('║')}      ${chalk.green.bold(' ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝')}      ${chalk.yellow('║')}
+${chalk.yellow('║')}                                                               ${chalk.yellow('║')}
+${chalk.yellow('╚═══════════════════════════════════════════════════════════════╝')}
+`;
+
+    console.log(art);
+    console.log();
+    console.log(chalk.green.bold('  🎉 You caught all 151 original Pokémon! 🎉'));
+    console.log();
+    console.log(chalk.cyan(`  ⏱️  Time: ${chalk.bold(timeStr)}`));
+    console.log();
+    console.log(chalk.gray('  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+    console.log();
+    console.log(chalk.blue('  Share your time on social media!'));
+    console.log();
+    console.log(chalk.white(`  I caught all 151 Pokémon in ${timeStr}! 🎮✨`));
+    console.log(chalk.white(`  Challenge: PokeGuessr`));
+    console.log();
+    console.log(chalk.gray('  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+    console.log();
+    console.log(chalk.gray('  By @chrishannah'));
+    console.log();
 }
 
 gameLoop();
