@@ -13,6 +13,7 @@ const MAX_COLUMNS = 10; // Maximum columns to prevent overcrowding
 const revealed = [];
 let shouldRedraw = false;
 let startTime = null;
+let timerInterval = null;
 
 // Calculate optimal number of columns based on terminal width
 function calculateColumns() {
@@ -26,6 +27,13 @@ function calculateColumns() {
 // Handle terminal resize events
 process.stdout.on('resize', () => {
     shouldRedraw = true;
+});
+
+// Clean up timer on exit
+process.on('exit', () => {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
 });
 
 // Format elapsed time in a readable format
@@ -46,8 +54,26 @@ function formatTime(milliseconds) {
     }
 }
 
+// Update the timer display in real-time
+function updateTimer() {
+    if (!startTime) return;
+
+    const elapsed = Date.now() - startTime;
+    const timeStr = formatTime(elapsed);
+
+    // Save cursor position, move to first line, update time, restore cursor
+    process.stdout.write('\x1b[s'); // Save cursor position
+    process.stdout.write('\x1b[1;1H'); // Move to line 1, column 1
+    process.stdout.write('\x1b[K'); // Clear line
+    process.stdout.write(chalk.green(`Guessed ${revealed.length}/151`) + chalk.gray(` | Time: ${timeStr}`));
+    process.stdout.write('\x1b[u'); // Restore cursor position
+}
+
 async function gameLoop() {
     startTime = Date.now();
+
+    // Start the timer interval to update every second
+    timerInterval = setInterval(updateTimer, 1000);
 
     while (revealed.length < 151) {
         printPokemonList(pokemonList, revealed);
@@ -132,6 +158,12 @@ function printPokemonList(all, revealed) {
 }
 
 function showCompletionScreen() {
+    // Clear the timer interval
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
     console.clear();
 
     const elapsed = Date.now() - startTime;
