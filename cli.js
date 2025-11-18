@@ -110,6 +110,13 @@ async function gameLoop() {
             // Correct
             console.log(chalk.green(`Correct: ${found[0].name}`));
             revealed.push(...found);
+
+            // Check if we've completed all 151 - show completion immediately
+            if (revealed.length === 151) {
+                await new Promise((resolve) => setTimeout(resolve, 600));
+                showCompletionScreen();
+                process.exit(0);
+            }
         } else {
             // Incorrect
             console.log(chalk.red(`Incorrect: ${answers.guess}`));
@@ -149,11 +156,6 @@ function printPokemonList(all, revealed) {
             }
         }
         console.log(row.join(" ".repeat(COLUMN_SPACING)));
-    }
-
-    if (all.length === revealed.length) {
-        showCompletionScreen();
-        process.exit(0);
     }
 }
 
